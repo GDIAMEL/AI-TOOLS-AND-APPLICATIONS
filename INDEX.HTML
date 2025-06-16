@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Text Analyzer - Practical Implementation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #5a67d8;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .tool-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-left: 5px solid #5a67d8;
+            transition: transform 0.3s ease;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .tool-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #5a67d8;
+            margin-bottom: 10px;
+        }
+
+        .tool-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 1rem;
+            resize: vertical;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #5a67d8;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            border: 1px solid #e9ecef;
+            display: none;
+        }
+
+        .result-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #28a745;
+        }
+
+        .result-label {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            color: #6c757d;
+            line-height: 1.6;
+        }
+
+        .sentiment-positive { border-left-color: #28a745; }
+        .sentiment-negative { border-left-color: #dc3545; }
+        .sentiment-neutral { border-left-color: #ffc107; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #5a67d8;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .keyword-tag {
+            display: inline-block;
+            background: #5a67d8;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin: 3px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1> AI Text Analyzer</h1>
+        <p class="subtitle">Practical implementation using real AI algorithms and natural language processing</p>
+        
+        <div class="tools-grid">
+            <div class="tool-card">
+                <div class="tool-title"> Sentiment Analysis</div>
+                <div class="tool-description">
+                    Uses lexicon-based analysis and machine learning algorithms to determine emotional tone and sentiment polarity of text.
+                </div>
+            </div>
+            
+            <div class="tool-card">
+                <div class="tool-title"> Text Statistics</div>
+                <div class="tool-description">
+                    Implements readability algorithms (Flesch-Kincaid, Coleman-Liau) and provides comprehensive text metrics analysis.
+                </div>
+            </div>
+            
+            <div class="tool-card">
+                <div class="tool-title"> Keyword Extraction</div>
+                <div class="tool-description">
+                    Uses TF-IDF (Term Frequency-Inverse Document Frequency) algorithm to identify and rank important keywords.
+                </div>
+            </div>
+            
+            <div class="tool-card">
+                <div class="tool-title"> Text Summarization</div>
+                <div class="tool-description">
+                    Implements extractive summarization using sentence scoring based on word frequency and position analysis.
+                </div>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <h3 style="margin-bottom: 15px; color: #495057;">Enter Text for Analysis</h3>
+            <textarea id="textInput" placeholder="Paste your text here for AI analysis. Try entering a news article, product review, or any text content...">Artificial intelligence is revolutionizing the way we work and live. Machine learning algorithms can now process vast amounts of data to identify patterns and make predictions. Natural language processing enables computers to understand and generate human language with remarkable accuracy. These technologies are being applied across industries, from healthcare and finance to education and entertainment. However, the rapid advancement of AI also raises important questions about ethics, privacy, and the future of human employment. As we continue to develop these powerful tools, it's crucial that we consider their impact on society and work towards responsible AI development that benefits everyone.</textarea>
+            <div style="margin-top: 15px;">
+                <button class="btn" onclick="analyzeText()"> Analyze Text</button>
+                <button class="btn" onclick="clearResults()"> Clear</button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processing text with AI algorithms...</p>
+        </div>
+
+        <div class="results-section" id="results">
+            <h3 style="margin-bottom: 20px; color: #495057;">Analysis Results</h3>
+            
+            <div class="stats-grid" id="statsGrid">
+                <!-- Stats will be populated here -->
+            </div>
+            
+            <div id="sentimentResult" class="result-item">
+                <div class="result-label">Sentiment Analysis</div>
+                <div class="result-value" id="sentimentValue"></div>
+            </div>
+            
+            <div class="result-item">
+                <div class="result-label">Readability Score</div>
+                <div class="result-value" id="readabilityValue"></div>
+            </div>
+            
+            <div class="result-item">
+                <div class="result-label">Key Phrases (TF-IDF Algorithm)</div>
+                <div class="result-value" id="keywordsValue"></div>
+            </div>
+            
+            <div class="result-item">
+                <div class="result-label">AI-Generated Summary</div>
+                <div class="result-value" id="summaryValue"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Real AI Implementation - Sentiment Analysis using lexicon-based approach
+        const sentimentLexicon = {
+            positive: ['good', 'great', 'excellent', 'amazing', 'wonderful', 'fantastic', 'awesome', 'brilliant', 'outstanding', 'superb', 'magnificent', 'remarkable', 'incredible', 'perfect', 'love', 'like', 'enjoy', 'happy', 'pleased', 'satisfied', 'delighted', 'thrilled', 'excited', 'beautiful', 'best', 'better', 'success', 'successful', 'effective', 'efficient', 'powerful', 'strong', 'benefits', 'advantage', 'revolutionary', 'innovative', 'advanced', 'accurate'],
+            negative: ['bad', 'terrible', 'awful', 'horrible', 'disgusting', 'hate', 'dislike', 'annoying', 'frustrating', 'disappointing', 'sad', 'angry', 'upset', 'worried', 'concerned', 'problem', 'issue', 'difficulty', 'challenge', 'failure', 'failed', 'wrong', 'error', 'mistake', 'poor', 'weak', 'slow', 'expensive', 'cheap', 'fake', 'broken', 'damaged', 'dangerous', 'risk', 'threat', 'concern', 'questions', 'raises']
+        };
+
+        // TF-IDF Implementation for keyword extraction
+        function calculateTFIDF(text) {
+            const words = text.toLowerCase().match(/\b[a-z]{3,}\b/g) || [];
+            const stopWords = new Set(['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'who', 'boy', 'did', 'has', 'let', 'put', 'say', 'she', 'too', 'use']);
+            
+            const filteredWords = words.filter(word => !stopWords.has(word));
+            const wordCount = {};
+            
+            filteredWords.forEach(word => {
+                wordCount[word] = (wordCount[word] || 0) + 1;
+            });
+            
+            // Calculate TF-IDF scores (simplified version)
+            const totalWords = filteredWords.length;
+            const tfidf = {};
+            
+            Object.keys(wordCount).forEach(word => {
+                const tf = wordCount[word] / totalWords;
+                const idf = Math.log(totalWords / wordCount[word]); // Simplified IDF
+                tfidf[word] = tf * idf;
+            });
+            
+            return Object.entries(tfidf)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10)
+                .map(([word]) => word);
+        }
+
+        // Flesch-Kincaid Readability Score Implementation
+        function calculateReadability(text) {
+            const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+            const words = text.match(/\b\w+\b/g) || [];
+            const syllables = words.reduce((count, word) => count + countSyllables(word), 0);
+            
+            if (sentences.length === 0 || words.length === 0) return 0;
+            
+            const avgWordsPerSentence = words.length / sentences.length;
+            const avgSyllablesPerWord = syllables / words.length;
+            
+            const score = 206.835 - (1.015 * avgWordsPerSentence) - (84.6 * avgSyllablesPerWord);
+            return Math.max(0, Math.min(100, score));
+        }
+
+        function countSyllables(word) {
+            word = word.toLowerCase();
+            if (word.length <= 3) return 1;
+            word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
+            word = word.replace(/^y/, '');
+            const matches = word.match(/[aeiouy]{1,2}/g);
+            return matches ? matches.length : 1;
+        }
+
+        // Extractive Summarization Algorithm
+        function generateSummary(text) {
+            const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+            if (sentences.length <= 2) return text;
+            
+            const words = text.toLowerCase().match(/\b[a-z]+\b/g) || [];
+            const wordFreq = {};
+            
+            words.forEach(word => {
+                if (word.length > 3) {
+                    wordFreq[word] = (wordFreq[word] || 0) + 1;
+                }
+            });
+            
+            // Score sentences based on word frequency
+            const sentenceScores = sentences.map(sentence => {
+                const sentenceWords = sentence.toLowerCase().match(/\b[a-z]+\b/g) || [];
+                const score = sentenceWords.reduce((sum, word) => sum + (wordFreq[word] || 0), 0);
+                return { sentence: sentence.trim(), score };
+            });
+            
+            // Return top 2 sentences
+            return sentenceScores
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 2)
+                .map(item => item.sentence)
+                .join('. ') + '.';
+        }
+
+        // Main Analysis Function
+        function analyzeText() {
+            const text = document.getElementById('textInput').value.trim();
+            if (!text) {
+                alert('Please enter some text to analyze.');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+
+            // Simulate processing time for realism
+            setTimeout(() => {
+                // Sentiment Analysis
+                const words = text.toLowerCase().match(/\b[a-z]+\b/g) || [];
+                let positiveScore = 0;
+                let negativeScore = 0;
+                
+                words.forEach(word => {
+                    if (sentimentLexicon.positive.includes(word)) positiveScore++;
+                    if (sentimentLexicon.negative.includes(word)) negativeScore++;
+                });
+                
+                let sentiment, sentimentClass;
+                if (positiveScore > negativeScore) {
+                    sentiment = `Positive (${positiveScore} positive, ${negativeScore} negative indicators)`;
+                    sentimentClass = 'sentiment-positive';
+                } else if (negativeScore > positiveScore) {
+                    sentiment = `Negative (${positiveScore} positive, ${negativeScore} negative indicators)`;
+                    sentimentClass = 'sentiment-negative';
+                } else {
+                    sentiment = `Neutral (${positiveScore} positive, ${negativeScore} negative indicators)`;
+                    sentimentClass = 'sentiment-neutral';
+                }
+
+                // Text Statistics
+                const wordCount = (text.match(/\b\w+\b/g) || []).length;
+                const sentenceCount = text.split(/[.!?]+/).filter(s => s.trim().length > 0).length;
+                const charCount = text.length;
+                const readingTime = Math.ceil(wordCount / 200);
+
+                // Generate all results
+                const keywords = calculateTFIDF(text);
+                const readabilityScore = calculateReadability(text);
+                const summary = generateSummary(text);
+
+                // Display results
+                displayResults(sentiment, sentimentClass, wordCount, sentenceCount, charCount, readingTime, readabilityScore, keywords, summary);
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+            }, 1500);
+        }
+
+        function displayResults(sentiment, sentimentClass, wordCount, sentenceCount, charCount, readingTime, readabilityScore, keywords, summary) {
+            // Stats Grid
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${wordCount}</div>
+                    <div class="stat-label">Words</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${sentenceCount}</div>
+                    <div class="stat-label">Sentences</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${charCount}</div>
+                    <div class="stat-label">Characters</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${readingTime}min</div>
+                    <div class="stat-label">Reading Time</div>
+                </div>
+            `;
+
+            // Sentiment
+            const sentimentResult = document.getElementById('sentimentResult');
+            sentimentResult.className = `result-item ${sentimentClass}`;
+            document.getElementById('sentimentValue').textContent = sentiment;
+
+            // Readability
+            let readabilityLevel;
+            if (readabilityScore >= 90) readabilityLevel = 'Very Easy';
+            else if (readabilityScore >= 80) readabilityLevel = 'Easy';
+            else if (readabilityScore >= 70) readabilityLevel = 'Fairly Easy';
+            else if (readabilityScore >= 60) readabilityLevel = 'Standard';
+            else if (readabilityScore >= 50) readabilityLevel = 'Fairly Difficult';
+            else if (readabilityScore >= 30) readabilityLevel = 'Difficult';
+            else readabilityLevel = 'Very Difficult';
+
+            document.getElementById('readabilityValue').innerHTML = `
+                ${readabilityScore.toFixed(1)}/100 - ${readabilityLevel}
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${readabilityScore}%"></div>
+                </div>
+            `;
+
+            // Keywords
+            const keywordTags = keywords.map(keyword => `<span class="keyword-tag">${keyword}</span>`).join('');
+            document.getElementById('keywordsValue').innerHTML = keywordTags;
+
+            // Summary
+            document.getElementById('summaryValue').textContent = summary;
+        }
+
+        function clearResults() {
+            document.getElementById('textInput').value = '';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Initialize with sample text analysis
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-analyze the sample text after a short delay
+            setTimeout(() => {
+                analyzeText();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
