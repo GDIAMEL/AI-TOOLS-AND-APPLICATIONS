@@ -16,7 +16,7 @@ An interactive web application that analyzes the impact of climate change on glo
 - **Neural Network**: R² = 0.7892
 - **Gradient Boosting**: R² = 0.7654
 - **Linear Regression**: R² = 0.6789
-- 
+
 ### Interactive Visualizations
 - Climate variables correlation radar chart
 - Crop yield distribution analysis
